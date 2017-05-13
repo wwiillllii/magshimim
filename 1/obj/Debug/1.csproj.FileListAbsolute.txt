@@ -1,0 +1,17 @@
+C:\Users\User\Desktop\Assignments\winForms\1\1\bin\Debug\1.exe.config
+C:\Users\User\Desktop\Assignments\winForms\1\1\bin\Debug\1.exe
+C:\Users\User\Desktop\Assignments\winForms\1\1\bin\Debug\1.pdb
+C:\Users\User\Desktop\Assignments\winForms\1\1\bin\Debug\mscorlib.dll
+C:\Users\User\Desktop\Assignments\winForms\1\1\bin\Debug\he\mscorlib.resources.dll
+C:\Users\User\Desktop\Assignments\winForms\1\1\bin\Debug\normidna.nlp
+C:\Users\User\Desktop\Assignments\winForms\1\1\bin\Debug\normnfc.nlp
+C:\Users\User\Desktop\Assignments\winForms\1\1\bin\Debug\normnfd.nlp
+C:\Users\User\Desktop\Assignments\winForms\1\1\bin\Debug\normnfkc.nlp
+C:\Users\User\Desktop\Assignments\winForms\1\1\bin\Debug\normnfkd.nlp
+C:\Users\User\Desktop\Assignments\winForms\1\1\obj\Debug\1.csprojResolveAssemblyReference.cache
+C:\Users\User\Desktop\Assignments\winForms\1\1\obj\Debug\_1.Form1.resources
+C:\Users\User\Desktop\Assignments\winForms\1\1\obj\Debug\_1.Properties.Resources.resources
+C:\Users\User\Desktop\Assignments\winForms\1\1\obj\Debug\1.csproj.GenerateResource.Cache
+C:\Users\User\Desktop\Assignments\winForms\1\1\obj\Debug\1.exe
+C:\Users\User\Desktop\Assignments\winForms\1\1\obj\Debug\1.pdb
+C:\Users\User\Desktop\Assignments\winForms\1\1\obj\Debug\_1.mainForm.resources
