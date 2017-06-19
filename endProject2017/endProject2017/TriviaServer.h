@@ -43,6 +43,7 @@ private:
 	void bindAndListen();
 	void messageHandler();
 	void clientHandler(SOCKET client);
+	void gameClock(Room* r);
 	User* getUserBySocket(SOCKET socket);
 	/*
 	void serve();

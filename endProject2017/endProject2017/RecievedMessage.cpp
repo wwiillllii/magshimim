@@ -58,6 +58,14 @@ User* RM::getUser() const { return user; }
 void RM::setUser(User* user){ this->user = user; }
 SOCKET RM::getSocket() const { return socket; }
 std::string RM::operator[](unsigned int i) const { return values[i]; }// May throw out_of_range exception
+std::string RM::toString()
+{
+	std::string ret = to_string(code);
+	auto it = values.begin();
+	while (it != values.end())
+		ret += *it++;
+	return ret;
+}
 
 std::string getStringWithLen(SOCKET s, int lenBytes)
 {

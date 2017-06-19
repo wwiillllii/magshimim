@@ -2,8 +2,11 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include "User.h"
+#include "Database.h"
+#include "Question.h"
 
 class User;
 
@@ -22,12 +25,23 @@ public:
 	int getSecondsPerQuestion() const;
 	int getNumQuestions() const;
 	std::string getUserNames();
+
+	void startGame(DataBase& db);
+	bool isGame();
+	void answer(User* u, int a, int t);
+	bool nextQuestion();
 	
 private:
+	void updateUsers();
+
 	std::string name;
-	std::vector<User*> users;
+	// Map users to pairs of <has user answered?, score>
+	std::map<User*, std::pair<bool,int>> users;
+	std::vector<Question> questions;
 	User* admin;
 	int maxUsers;
 	int secondsPerQuestion;
 	int numQuestions;
+	int questionIndex;
+	bool _isGame;
 };

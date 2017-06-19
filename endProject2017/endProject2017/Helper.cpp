@@ -3,6 +3,7 @@
 #include <string>
 #include <iomanip>
 #include <sstream>
+#include <iostream>
 
 using namespace std;
 
@@ -26,7 +27,9 @@ int Helper::getMessageTypeCode(SOCKET sc)
 void Helper::sendData(SOCKET sc, std::string message) 
 {
 	const char* data = message.c_str();
-	
+	if (string(data).substr(0, 3) == "108")
+		std::cout << "BREAKPOINT" << std::endl;
+	std::cout << "DEBUG: " << data << std::endl;
 	if (send(sc, data, message.size(), 0) == INVALID_SOCKET)
 	{
 		throw std::exception("Error while sending message to client");

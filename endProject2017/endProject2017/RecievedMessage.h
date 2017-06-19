@@ -16,6 +16,7 @@ public:
 	void setUser(User* user);
 	SOCKET getSocket() const;
 	std::string operator[](unsigned int i) const;
+	std::string toString();
 
 	void handle200(SOCKET s);
 	void handle201(SOCKET s);

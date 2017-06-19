@@ -12,6 +12,7 @@
 std::queue<RecievedMessage> messages;
 std::mutex messagesMTX;
 std::condition_variable messagesCV;
+bool running = true;
 
 void(TS::*messageHandlers[])(RecievedMessage&){
 	&TS::handle200, &TS::handle201, NULL,			&TS::handle203,
@@ -41,10 +42,16 @@ TS::~TriviaServer()
 void TS::messageHandler()
 {
 	RecievedMessage msg;
-	while (true)
+	const auto t = std::chrono::milliseconds(500);
+	
+	while (running)
 	{
 		std::unique_lock<std::mutex> lock(messagesMTX);
-		messagesCV.wait(lock, []{ return !messages.empty(); });
+		if (!messagesCV.wait_for(lock, t, []{ return !messages.empty(); }))
+		{
+			lock.unlock();
+			continue;
+		}
 		msg = messages.front();
 		messages.pop();
 		lock.unlock();
@@ -53,6 +60,7 @@ void TS::messageHandler()
 		if (code / 100 == 2)
 		{
 			unsigned int index = code % 100;
+			std::cout << "Recieved: " << msg.toString() << std::endl;
 			if (index == 99) handle299(msg);
 			else if (index < 26 && messageHandlers[index])
 				(this->*messageHandlers[index])(msg);
@@ -61,6 +69,8 @@ void TS::messageHandler()
 		}else
 			std::cerr << "Illigal type code: " << code << std::endl;
 	}
+
+	std::cout << "DEBUG: messageHandler closed!" << std::endl;
 }
 
 // User signin
@@ -102,16 +112,21 @@ void TS::handle203(RecievedMessage& msg)
 // Get room list
 void TS::handle205(RecievedMessage& msg)
 {
-	std::string ret = "106";
-	ret += Helper::getPaddedNumber(rooms.size(), 4);
+	std::string ret = "";
+	int count = 0;
 	std::map<int, Room*>::iterator it = rooms.begin();
 	while (it != rooms.end())
 	{
-		ret += Helper::getPaddedNumber(it->first, 4);
-		ret += Helper::getPaddedNumber(it->second->getName().size(), 2);
-		ret += it->second->getName();
+		if (!it->second->isGame())
+		{
+			ret += Helper::getPaddedNumber(it->first, 4);
+			ret += Helper::getPaddedNumber(it->second->getName().size(), 2);
+			ret += it->second->getName();
+			count++;
+		}
 		it++;
 	}
+	ret = "106" + Helper::getPaddedNumber(count,4) + ret;
 	Helper::sendData(msg.getSocket(), ret);
 }
 // Get users connected to room
@@ -151,9 +166,11 @@ void TS::handle209(RecievedMessage& msg)
 // Leave room
 void TS::handle211(RecievedMessage& msg)
 {
-	User* user = msg.getUser();
-	if (!user || !user->getRoom()) return;
-	user->getRoom()->removeUser(user);
+	User* u = msg.getUser();
+	if (u == NULL) return;
+	Room* r = u->getRoom();
+	if (r == NULL) return;
+	r->removeUser(u);
 	Helper::sendData(msg.getSocket(), "1120");
 }
 int TS::nextRoomId()
@@ -174,10 +191,12 @@ int TS::nextRoomId()
 // Create room
 void TS::handle213(RecievedMessage& msg)
 {
+	User* u = msg.getUser();
+	if (u == NULL) return;
 	Room* r = NULL;
 	try
 	{
-		r = new Room(msg.getUser(),
+		r = new Room(u,
 			msg[0],
 			stoi(msg[1]),
 			stoi(msg[2]),
@@ -191,25 +210,59 @@ void TS::handle213(RecievedMessage& msg)
 	}
 	rooms[nextRoomId()] = r;
 	Helper::sendData(msg.getSocket(), "1140");
-	msg.getUser()->setRoom(r);
+	u->setRoom(r);
 }
 // Close room
 void TS::handle215(RecievedMessage& msg)
 {
-	Room* r = msg.getUser()->getRoom();
+	User* u = msg.getUser();
+	if (u == NULL) return;
+	Room* r = u->getRoom();
+	if (r == NULL) return;
 	r->close();
 	rooms.erase(std::find_if(rooms.begin(), rooms.end(), [r](std::pair<int,Room*> p)
 	{
 		return p.second == r;
 	}));
 }
-void TS::handle217(RecievedMessage& msg){}
-void TS::handle219(RecievedMessage& msg){}
+// Start game
+void TS::handle217(RecievedMessage& msg)
+{
+	User* u = msg.getUser();
+	if (u == NULL) return;
+	Room* r = u->getRoom();
+	if (r == NULL) return;
+	r->startGame(db);
+	std::thread(&TS::gameClock, this, r).detach();
+}
+// Player answer
+void TS::handle219(RecievedMessage& msg)
+{
+	User* u = msg.getUser();
+	if (u == NULL) return;
+	Room* r = u->getRoom();
+	if (r == NULL) return;
+	r->answer(u, stoi(msg[0]), stoi(msg[1]));
+}
 void TS::handle222(RecievedMessage& msg){}
 void TS::handle223(RecievedMessage& msg){}
 void TS::handle225(RecievedMessage& msg){}
 void TS::handle299(RecievedMessage& msg)
 {
+	User* u = msg.getUser();
+	if (u)
+	{
+		Room* r = u->getRoom();
+		if (r)
+		{
+			r->removeUser(u);
+			if (!r->getUsersCount())
+				rooms.erase(std::find_if(rooms.begin(), rooms.end(), [r](std::pair<int, Room*> p)
+				{
+					return p.second == r;
+				}));
+		}
+	}
 	closesocket(msg.getSocket());
 	connectedUsers.erase(msg.getSocket());
 }
@@ -237,7 +290,16 @@ void TS::bindAndListen()
 		system("pause");
 	}
 }
-
+void TS::gameClock(Room* r)
+{
+	while (r->nextQuestion())
+		std::this_thread::sleep_for(std::chrono::seconds(r->getSecondsPerQuestion()));
+	rooms.erase(std::find_if(rooms.begin(), rooms.end(), [r](std::pair<int, Room*> p)
+	{
+		return p.second == r;
+	}));
+	r->close();
+}
 User* TS::getUserBySocket(SOCKET socket)
 {
 	User* user = NULL;
@@ -248,7 +310,6 @@ User* TS::getUserBySocket(SOCKET socket)
 	catch (out_of_range&){}
 	return user;
 }
-
 void TS::clientHandler(SOCKET client)
 {
 	RecievedMessage msg;
@@ -274,8 +335,6 @@ void TS::clientHandler(SOCKET client)
 				std::cerr << "Unexpected error in clientHandler for socket " << client << ":" << e.what() << std::endl;
 	}
 }
-
-bool running = true;
 void TS::serve()
 {
 	fd_set fds;
