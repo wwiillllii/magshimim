@@ -60,7 +60,6 @@ void TS::messageHandler()
 		if (code / 100 == 2)
 		{
 			unsigned int index = code % 100;
-			std::cout << "Recieved: " << msg.toString() << std::endl;
 			if (index == 99) handle299(msg);
 			else if (index < 26 && messageHandlers[index])
 				(this->*messageHandlers[index])(msg);
@@ -69,8 +68,6 @@ void TS::messageHandler()
 		}else
 			std::cerr << "Illigal type code: " << code << std::endl;
 	}
-
-	std::cout << "DEBUG: messageHandler closed!" << std::endl;
 }
 
 // User signin
@@ -200,7 +197,8 @@ void TS::handle213(RecievedMessage& msg)
 			msg[0],
 			stoi(msg[1]),
 			stoi(msg[2]),
-			stoi(msg[3]));
+			stoi(msg[3]),
+			&db);
 	}
 	catch (exception&)
 	{
@@ -232,7 +230,7 @@ void TS::handle217(RecievedMessage& msg)
 	if (u == NULL) return;
 	Room* r = u->getRoom();
 	if (r == NULL) return;
-	r->startGame(db);
+	r->startGame();
 	std::thread(&TS::gameClock, this, r).detach();
 }
 // Player answer
@@ -244,9 +242,37 @@ void TS::handle219(RecievedMessage& msg)
 	if (r == NULL) return;
 	r->answer(u, stoi(msg[0]), stoi(msg[1]));
 }
-void TS::handle222(RecievedMessage& msg){}
-void TS::handle223(RecievedMessage& msg){}
-void TS::handle225(RecievedMessage& msg){}
+// Player left game
+void TS::handle222(RecievedMessage& msg)
+{
+	User* u = msg.getUser();
+	if (u == NULL) return;
+	Room* r = u->getRoom();
+	if (r == NULL) return;
+	r->removeUser(u);
+}
+// Best scores
+void TS::handle223(RecievedMessage& msg)
+{
+	std::vector<std::pair<std::string, int>> scores = db.getHighScores();
+	unsigned int i = 0;
+	std::string ret = "124";
+	for (i = 0; i < scores.size(); i++)
+	{
+		ret += Helper::getPaddedNumber(scores[i].first.size(), 2);
+		ret += scores[i].first;
+		ret += Helper::getPaddedNumber(scores[i].second, 6);
+	}
+	for (i; i < 3; i++)
+		ret += "00"   "000000";
+	Helper::sendData(msg.getSocket(), ret);
+}
+// Personal status
+void TS::handle225(RecievedMessage& msg)
+{
+	Helper::sendData(msg.getSocket(), "126" + db.getPersonalStatus(msg.getUser()->getName()));
+}
+// User disconnected
 void TS::handle299(RecievedMessage& msg)
 {
 	User* u = msg.getUser();
@@ -364,6 +390,7 @@ int main()
 		{
 			running = false;
 			t.join();
+			this_thread::sleep_for(std::chrono::milliseconds(1000));
 			return 0;
 		}
 		else if (input == "help")

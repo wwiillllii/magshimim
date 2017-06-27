@@ -5,7 +5,7 @@
 #include "Room.h"
 #include "Helper.h"
 
-Room::Room(User* admin, std::string name, int maxUsers, int questionsNum, int questionTime)
+Room::Room(User* admin, std::string name, int maxUsers, int questionsNum, int questionTime, DataBase* db)
 {
 	if (!admin ||
 		maxUsers < 1 || maxUsers > 9 ||
@@ -19,6 +19,7 @@ Room::Room(User* admin, std::string name, int maxUsers, int questionsNum, int qu
 	this->secondsPerQuestion = questionTime;
 	this->_isGame = false;
 	this->questionIndex = 0;
+	this->db = db;
 	admin->setRoom(this);
 	users[admin] = std::pair<bool, int>(false, 0);
 }
@@ -41,7 +42,11 @@ void Room::removeUser(User* user)
 	users.erase(user);
 	user->setRoom(NULL);
 	if (user == admin)
+	{
+		if (_isGame)
+			db->endGame(gameId);
 		close();
+	}
 	else
 		updateUsers();
 }
@@ -108,14 +113,20 @@ bool Room::isGame()
 {
 	return _isGame;
 }
-void Room::startGame(DataBase& db)
+void Room::startGame()
 {
 	_isGame = true;
-	db.generateQuestions(&questions, numQuestions);
+	gameId = db->newGame();
+	std::cout << "New game: " << gameId << std::endl;
+	db->generateQuestions(&questions, numQuestions);
 }
 bool Room::nextQuestion()
 {
-	if (questionIndex >= numQuestions) return false;
+	if (questionIndex >= numQuestions)
+	{
+		db->endGame(gameId);
+		return false;
+	}
 	std::string msg = "118";
 	std::string str;
 	Question& q = questions[questionIndex++];
@@ -140,9 +151,12 @@ bool Room::nextQuestion()
 void Room::answer(User* u, int a, int t)
 {
 	std::string msg = "120";
-	int correct = (t <= secondsPerQuestion && a == questions[questionIndex-1].correctAnswer()) ? 1 : 0;
+	int correct = (t <= secondsPerQuestion && a-1 == questions[questionIndex-1].correctAnswer()) ? 1 : 0;
 	msg += (correct + '0');
 	users[u].first = true;
 	users[u].second += correct;
 	Helper::sendData(u->getSocket(), msg);
+	const Question& q = questions[questionIndex - 1];
+
+	db->answer(gameId, u->getName(), q.getId(), q.getAnswer(a - 1), correct, t);
 }

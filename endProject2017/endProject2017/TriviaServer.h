@@ -21,8 +21,8 @@ private:
 public:
 	TriviaServer();
 	~TriviaServer();
+	// Start the server.
 	void serve(); 
-	int nextRoomId();
 
 	void handle200(RecievedMessage& msg);
 	void handle201(RecievedMessage& msg);
@@ -40,43 +40,10 @@ public:
 	void handle225(RecievedMessage& msg);
 	void handle299(RecievedMessage& msg);
 private:
+	int nextRoomId();
 	void bindAndListen();
 	void messageHandler();
 	void clientHandler(SOCKET client);
 	void gameClock(Room* r);
 	User* getUserBySocket(SOCKET socket);
-	/*
-	void serve();
-private:
-	void accept();
-	void clientHandler(SOCKET client_socket);
-
-	Room* getRoomById(int roomId);
-	User* getUserByName(std::string username);
-	User* getUserBySocket(SOCKET client_socket);
-
-	void handleRecievedMessages();
-	void safeDeleteUser(RecievedMessage* msg);
-
-	User* handleSignin(RecievedMessage* msg);
-	void handleSignout(RecievedMessage* msg);
-	bool handleSignup(RecievedMessage* msg);
-
-	void handleLeaveGame(RecievedMessage* msg);
-	void handleStartGame(RecievedMessage* msg);
-
-	void handlePlayerAnswer(RecievedMessage* msg);
-	void handleGetBestScores(RecievedMessage* msg);
-	void handleGetPersonalStatus(RecievedMessage* msg);
-
-	bool handleCreateRoom(RecievedMessage* msg);
-	bool handleCloseRoom(RecievedMessage* msg);
-	bool handleJoinRoom(RecievedMessage* msg);
-	bool handleLeaveRoom(RecievedMessage* msg);
-	void handleGetUsersInRoom(RecievedMessage* msg);
-	void handleGetRooms(RecievedMessage* msg);
-
-	void addRecievedMessage(RecievedMessage* msg);
-	void buildRecievedMessage(SOCKET client_socket, int msgCode);
-	*/
 };

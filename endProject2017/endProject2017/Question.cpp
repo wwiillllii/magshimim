@@ -1,7 +1,8 @@
 #include "Question.h"
 
-Question::Question(std::string q, std::string a[4])
+Question::Question(std::string q, std::string a[4], int id)
 {
+	qId = id;
 	question = q;
 	int count, i;
 	for (count = 0; count < 4; count++)
@@ -13,15 +14,19 @@ Question::Question(std::string q, std::string a[4])
 		if (!count) correctId = i;
 	}
 }
-std::string Question::getQuestion()
+std::string Question::getQuestion() const
 {
 	return question;
 }
-std::string Question::getAnswer(int i)
+std::string Question::getAnswer(int i) const
 {
 	return answers[i];
 }
-int Question::correctAnswer()
+int Question::correctAnswer() const
 {
 	return correctId;
+}
+int Question::getId() const
+{
+	return qId;
 }

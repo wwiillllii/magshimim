@@ -5,8 +5,7 @@
 
 #define RM RecievedMessage
 
-//static const void((*handlerFuncs[])(SOCKET));
-
+// Member-function-pointer sorcery.
 void((RM::*handlerFuncs[])(SOCKET)) = {
 	&RM::handle200,	&RM::handle201,	NULL,			&RM::handle203,
 	NULL,			&RM::handle205,	NULL,			&RM::handle207,

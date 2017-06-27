@@ -80,6 +80,7 @@
   <ItemGroup>
     <ClInclude Include="Database.h" />
     <ClInclude Include="Helper.h" />
+    <ClInclude Include="MD5.h" />
     <ClInclude Include="Question.h" />
     <ClInclude Include="RecievedMessage.h" />
     <ClInclude Include="Room.h" />
@@ -90,6 +91,7 @@
   <ItemGroup>
     <ClCompile Include="Database.cpp" />
     <ClCompile Include="Helper.cpp" />
+    <ClCompile Include="MD5.cpp" />
     <ClCompile Include="Question.cpp" />
     <ClCompile Include="RecievedMessage.cpp" />
     <ClCompile Include="Room.cpp" />

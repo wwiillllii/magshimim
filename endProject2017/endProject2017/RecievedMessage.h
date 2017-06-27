@@ -11,13 +11,19 @@ public:
 	~RecievedMessage();
 	RecievedMessage& operator = (const RecievedMessage& other);
 
+	// Get message code
 	unsigned int getCode() const;
+	// Get user. NULL if not yet signed in.
 	User* getUser() const;
+	// Set user.
 	void setUser(User* user);
+	// Get the socket from which the message was recieved.
 	SOCKET getSocket() const;
+	// Get message parameter.
 	std::string operator[](unsigned int i) const;
 	std::string toString();
 
+	// Helper functions for constructing messages based on their codes.
 	void handle200(SOCKET s);
 	void handle201(SOCKET s);
 	void handle203(SOCKET s);
